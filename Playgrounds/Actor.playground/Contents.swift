@@ -1,4 +1,5 @@
 import Foundation
+import PlaygroundSupport
 
 /**
  Actor
@@ -36,21 +37,19 @@ class UserStorage1 {
 let storage1 = UserStorage1()
 let user1 = User1(id: "1", name: "Alice")
 storage1.save(user1)
-
-let get1 = storage1.get("1")
-print(String(describing: get1?.name))
+print("not using actor:", storage1.get("1")?.name ?? "-")
 
 
 // 🥳 MARK: Using Actor (which works as exactly the same with above)
 
 final class User2: Sendable {
- let id: String
- let name: String
- 
- init(id: String, name: String) {
-     self.id = id
-     self.name = name
- }
+    let id: String
+    let name: String
+    
+    init(id: String, name: String) {
+        self.id = id
+        self.name = name
+    }
 }
 
 actor UserStorage2 {
@@ -65,13 +64,12 @@ actor UserStorage2 {
     }
 }
 
+PlaygroundPage.current.needsIndefiniteExecution = true
 Task {
     let storage2 = UserStorage2()
-    
     let user2 = User2(id: "3", name: "Bear")
     await storage2.save(user2)
+    print("using actor:", await storage2.get("3")?.name ?? "-")
     
-    let get2 = await storage2.get("3")
-    print(String(describing: get2?.name))
+    PlaygroundPage.current.finishExecution()
 }
-

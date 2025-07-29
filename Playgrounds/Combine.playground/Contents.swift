@@ -4,30 +4,7 @@ import UIKit
 import PlaygroundSupport
 import Combine
 
-// MARK: Test
 PlaygroundPage.current.needsIndefiniteExecution = true
-
-/*
- start 2 > finish 2 > start 4 > finish 4 > start 6 > finish 6
- >> testFlatMap value: 6 (= the last value)
- */
-testFlatMap()
-/*
- start 1, 2, 3 > finish 1 > finish 2 > finish 3
- >> testZip value: (1, 2, 3)
- */
-testZip()
-/*
- start 5, 1 > finish 1 > finish 5 > start 3 > finish 3
- >> testFlatMap value: 6
- */
-testZipAndFlatMap()
-
-//
-let publisher = TestPublisher<String>()
-let subscriber = TestSubscriber<String>()
-
-publisher.receive(subscriber: subscriber)
 
 // MARK: - Combine Zip, flatMap
 
@@ -87,6 +64,20 @@ func testZipAndFlatMap() {
         })
         .store(in: &cancellableBag)
 }
+
+// -------------------------------------
+
+/*
+// start 2 > finish 2 > start 4 > finish 4 > start 6 > finish 6
+// >> testFlatMap value: 6 (= the last value)
+testFlatMap()
+// start 1, 2, 3 > finish 1 > finish 2 > finish 3
+// >> testZip value: (1, 2, 3)
+testZip()
+// start 5, 1 > finish 1 > finish 5 > start 3 > finish 3
+// >> testFlatMap value: 6
+testZipAndFlatMap()
+*/
 
 // MARK: - Custom Publisher & Subscription & Subscriber
 
@@ -150,3 +141,12 @@ struct TestSubscriber<Input: Equatable>: Subscriber {
         print("Subscriber receive completion -", completion)
     }
 }
+
+// -------------------------------------
+
+/*
+let publisher = TestPublisher<String>()
+let subscriber = TestSubscriber<String>()
+
+publisher.receive(subscriber: subscriber)
+*/

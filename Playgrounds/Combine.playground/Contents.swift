@@ -10,13 +10,19 @@ PlaygroundPage.current.needsIndefiniteExecution = true
 
 var cancellableBag = Set<AnyCancellable>()
 
+func testFunction(_ seconds: Double, completion: @escaping (Bool) -> Void) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + abs(seconds)) {
+        completion(seconds >= 0)
+    }
+}
+
 func createPublisher(_ prefix: String, _ number: Int = .random(in: 0...10)) -> AnyPublisher<Int, Error> {
     print(prefix, "start", number)
     
     return Future() { promise in
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(abs(number))) {
-            print(prefix, "finish", number)
-            if number >= 0 {
+        testFunction(Double(number)) { succeed in
+            print(prefix, "finish", number, succeed)
+            if succeed {
                 promise(Result.success(number))
             } else {
                 promise(Result.failure(NSError()))
@@ -85,15 +91,12 @@ struct TestPublisher<Output: Equatable>: Publisher {
     typealias Failure = Error
     
     func receive<S>(subscriber: S) where S : Subscriber, any Failure == S.Failure, Output == S.Input {
-        Swift.print("Publisher receive subscriber -", subscriber)
         let subscription = TestSubscription<S, Output>(subscriber)
         subscriber.receive(subscription: subscription)
     }
 }
 
-class TestSubscription<S: Subscriber, Output: Equatable>: Subscription where S.Input == Output, S.Failure == Error {
-    var combineIdentifier: CombineIdentifier = .init()
-    
+class TestSubscription<S: Subscriber, Output: Equatable>: Subscription, CustomCombineIdentifierConvertible where S.Input == Output, S.Failure == Error {
     var subscriber: S?
     
     init(_ subscriber: S) {
@@ -101,7 +104,6 @@ class TestSubscription<S: Subscriber, Output: Equatable>: Subscription where S.I
     }
     
     func request(_ demand: Subscribers.Demand) {
-        print("Subscription request demand -", demand)
         if demand > 0 {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 if let output = "1 sec passed" as? Output {
@@ -117,7 +119,6 @@ class TestSubscription<S: Subscriber, Output: Equatable>: Subscription where S.I
     }
     
     func cancel() {
-        print("Subscription cancel")
         subscriber = nil
     }
 }
@@ -125,28 +126,24 @@ class TestSubscription<S: Subscriber, Output: Equatable>: Subscription where S.I
 struct TestSubscriber<Input: Equatable>: Subscriber {
     typealias Failure = Error
     
-    var combineIdentifier: CombineIdentifier = .init()
+    let combineIdentifier: CombineIdentifier = .init()
     
     func receive(subscription: any Subscription) {
-        print("Subscriber receive subscription -", subscription)
         subscription.request(.unlimited)
     }
     
     func receive(_ input: Input) -> Subscribers.Demand {
-        print("Subscriber receive input -", input)
         return .none
     }
     
     func receive(completion: Subscribers.Completion<any Failure>) {
-        print("Subscriber receive completion -", completion)
+        // do nothing
     }
 }
 
 // -------------------------------------
-
 /*
 let publisher = TestPublisher<String>()
 let subscriber = TestSubscriber<String>()
-
-publisher.receive(subscriber: subscriber)
+publisher.print().subscribe(subscriber)
 */

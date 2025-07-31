@@ -73,7 +73,6 @@ func testZipAndFlatMap() {
 
 // -------------------------------------
 
-/*
 // start 2 > finish 2 > start 4 > finish 4 > start 6 > finish 6
 // >> testFlatMap value: 6 (= the last value)
 testFlatMap()
@@ -83,67 +82,3 @@ testZip()
 // start 5, 1 > finish 1 > finish 5 > start 3 > finish 3
 // >> testFlatMap value: 6
 testZipAndFlatMap()
-*/
-
-// MARK: - Custom Publisher & Subscription & Subscriber
-
-struct TestPublisher<Output: Equatable>: Publisher {
-    typealias Failure = Error
-    
-    func receive<S>(subscriber: S) where S : Subscriber, any Failure == S.Failure, Output == S.Input {
-        let subscription = TestSubscription<S, Output>(subscriber)
-        subscriber.receive(subscription: subscription)
-    }
-}
-
-class TestSubscription<S: Subscriber, Output: Equatable>: Subscription, CustomCombineIdentifierConvertible where S.Input == Output, S.Failure == Error {
-    var subscriber: S?
-    
-    init(_ subscriber: S) {
-        self.subscriber = subscriber
-    }
-    
-    func request(_ demand: Subscribers.Demand) {
-        if demand > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                if let output = "1 sec passed" as? Output {
-                    self.subscriber?.receive(output)
-                    self.subscriber?.receive(completion: .finished)
-                } else {
-                    let error = NSError(domain: "", code: 0, userInfo: nil)
-                    self.subscriber?.receive(completion: .failure(error))
-                }
-                self.cancel()
-            }
-        }
-    }
-    
-    func cancel() {
-        subscriber = nil
-    }
-}
-
-struct TestSubscriber<Input: Equatable>: Subscriber {
-    typealias Failure = Error
-    
-    let combineIdentifier: CombineIdentifier = .init()
-    
-    func receive(subscription: any Subscription) {
-        subscription.request(.unlimited)
-    }
-    
-    func receive(_ input: Input) -> Subscribers.Demand {
-        return .none
-    }
-    
-    func receive(completion: Subscribers.Completion<any Failure>) {
-        // do nothing
-    }
-}
-
-// -------------------------------------
-/*
-let publisher = TestPublisher<String>()
-let subscriber = TestSubscriber<String>()
-publisher.print().subscribe(subscriber)
-*/

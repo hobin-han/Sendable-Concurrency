@@ -82,3 +82,23 @@ testZip()
 // start 5, 1 > finish 1 > finish 5 > start 3 > finish 3
 // >> testFlatMap value: 6
 testZipAndFlatMap()
+
+
+// MARK: - Timing
+
+// receiveCompletion can be invoked before the cancellable is assigned
+var cancellable: AnyCancellable? = nil {
+    willSet { print("cancellable will set") }
+    didSet { print("cancellable did set") }
+}
+
+func testTiming() {
+    cancellable = Just(1)
+        .sink(receiveCompletion: { completion in
+            print("completion")
+        }, receiveValue: { value in
+            print("receiveValue")
+        })
+}
+
+testTiming()

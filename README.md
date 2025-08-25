@@ -1,2 +1,2 @@
 # Sendable-Concurrency
-to study Sendable and Swift Concurrency
+to study or test Sendable and Swift Concurrency
